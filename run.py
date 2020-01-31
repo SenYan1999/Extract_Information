@@ -34,6 +34,7 @@ def data_preprocess():
 def train():
     # prepare data
     logger.info('PREPARING DATA...')
+    predicate2idx, idx2predicate = get_predicate2idx(args.schemas)
 
     train_p_dataset = torch.load(args.train_p_data)
     train_ner_dataset = torch.load(args.train_ner_data)
@@ -50,8 +51,8 @@ def train():
     # prepare model
     logger.info('PREPARING MODEL & OPTIMIER...')
 
-    p_model = P_Model(args.bert_path, args.bert_dim, len(train_p_dataset.pred2idx), args.drop_p).to(device)
-    ner_model = NER_Model(args.bert_path, args.bert_dim, len(train_ner_dataset.label2idx), args.drop_p).to(device)
+    p_model = P_Model(args.bert_path, args.bert_dim, len(train_p_dataset.pred2idx), args.drop_p, args.max_len).to(device)
+    ner_model = NER_Model(args.bert_path, args.bert_dim, len(train_ner_dataset.label2idx), args.drop_p, len(predicate2idx), args.max_len).to(device)
 
     p_optimizer = torch.optim.Adam(params=p_model.parameters(), lr=args.p_lr)
     ner_optimizer = torch.optim.Adam(params=ner_model.parameters(), lr=args.ner_lr)

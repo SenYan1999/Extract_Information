@@ -38,11 +38,12 @@ class Trainer:
         return (p, r, F1, acc)
 
     def calculate_ner_result(self, pred, truth):
-        pred = torch.argmax(pred, dim=-1)
-        acc = (pred == truth).cpu().sum().float() / truth.shape[0] / truth.shape[1]
+        # pred = torch.argmax(pred, dim=-1)
+        acc = (pred == truth.cpu()).sum().float() / truth.shape[0] / truth.shape[1]
         return acc.item()
 
     def train_epoch(self, epoch):
+        '''
         # step1: train p model
         logger.info('Epoch: %2d: Training P Model...' % epoch)
         pbar = tqdm(total = len(self.train_p_dataloader))
@@ -70,7 +71,7 @@ class Trainer:
         pbar.close()
         logger.info('Epoch: %2d | LOSS: %2.3f | F1: %1.3f | ACC: %1.3f | PRECISION: %1.3f | RECALL: %1.3f' %
                     (epoch, np.mean(p_losses), np.mean(p_f1), np.mean(p_acc), np.mean(p_p), np.mean(p_r)))
-
+        '''
         # step2: train ner model
         logger.info('Epoch %2d: Training NER Model...' % epoch)
         pbar = tqdm(total = len(self.train_ner_dataloader))
@@ -78,16 +79,19 @@ class Trainer:
 
         ner_losses, ner_acc = [], []
         for batch in self.train_ner_dataloader:
-            x, seg_id, y = map(lambda i: i.to(self.device), batch)
+            x, seg_id, y, p, mask = map(lambda i: i.to(self.device), batch)
 
             self.ner_optimizer.zero_grad()
-            out = self.ner_model(x, seg_id)
-            ner_loss = F.nll_loss(out.reshape(-1, out.shape[2]), y.reshape(-1))
+            out = self.ner_model(x, seg_id, p, mask, self.device)
+            ner_loss = self.ner_model.loss_fn(transformer_encode=out, tags=y, output_mask=mask)
+            # ner_loss = F.nll_loss(out.reshape(-1, out.shape[2]), y.reshape(-1))
             ner_loss.backward()
             self.ner_optimizer.step()
 
             ner_losses.append(ner_loss.item())
-            acc = self.calculate_ner_result(out, y)
+
+            predict= self.ner_model.predict(out, mask)
+            acc = self.calculate_ner_result(predict, y)
             ner_acc.append(acc)
 
             pbar.set_description('Epoch: %2d | LOSS: %2.3f | ACC: %1.3f' % (epoch, ner_loss.item(), acc))

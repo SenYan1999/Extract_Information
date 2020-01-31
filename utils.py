@@ -11,23 +11,28 @@ from args import parser
 
 # define global logging
 args = parser.parse_args()
-def init_logger(filename, when='D', backCount=3, fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
+
+
+def init_logger(filename, when='D', backCount=3,
+                fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
     logger = logging.getLogger(filename)
     format_str = logging.Formatter(fmt)
     logger.setLevel(logging.INFO)
     sh = logging.StreamHandler()
     sh.setFormatter(format_str)
-    th = handlers.TimedRotatingFileHandler(filename=filename,when=when,backupCount=backCount,encoding='utf-8')
+    th = handlers.TimedRotatingFileHandler(filename=filename, when=when, backupCount=backCount, encoding='utf-8')
     th.setFormatter(format_str)
     logger.addHandler(sh)
     logger.addHandler(th)
 
     return logger
 
+
 logger = init_logger(filename=args.log_file)
 
+
 class KG_DataProcessor:
-    def __init__(self,  data_filename: str, count: int, predicate2idx: dict):
+    def __init__(self, data_filename: str, count: int, predicate2idx: dict):
         self.data_filename = data_filename
         self.count = count
 
@@ -36,7 +41,7 @@ class KG_DataProcessor:
         with jsonlines.open(self.data_filename) as reader:
             for line in reader:
                 data_piece = {}
-                predicates =  []
+                predicates = []
                 subjects = []
                 objects = []
 
@@ -54,6 +59,7 @@ class KG_DataProcessor:
                 data.append(data_piece)
 
         return data
+
 
 class PDataset(Dataset):
     def __init__(self, data: list, max_len: int, bert_type: str, pred2idx):
@@ -106,13 +112,13 @@ class NERDataset(Dataset):
         self.pred2idx = pred2idx
         self.label2idx, self.idx2label = self.get_ner_label()
 
-        self.X, self.SEG_ID, self.Y = self.process_raw_data()
+        self.X, self.SEG_ID, self.Y, self.P, self.MASK = self.process_raw_data()
 
     def __len__(self):
         return self.Y.shape[0]
 
     def __getitem__(self, idx):
-        return self.X[idx], self.SEG_ID[idx], self.Y[idx]
+        return self.X[idx], self.SEG_ID[idx], self.Y[idx], self.P[idx], self.MASK[idx]
 
     def get_ner_label(self):
         label = ['O', 'B-SUB', 'I-SUB', 'B-OBJ', 'I-OBJ', '[PAD]', 'CATEGORY', '[CLS]', '[SEP]']
@@ -123,7 +129,7 @@ class NERDataset(Dataset):
         return label2idx, idx2label
 
     def process_raw_data(self):
-        X, SEG_ID, Y = [], [], []
+        X, SEG_ID, Y, P, MASK = [], [], [], [], []
 
         logger.info('Processing NER Dataset....')
         count = 0
@@ -137,48 +143,55 @@ class NERDataset(Dataset):
                 s_begin, s_end = find_sublist(tokens, self.tokenizer.tokenize(s))
                 o_begin, o_end = find_sublist(tokens, self.tokenizer.tokenize(o))
 
-                if not (s_begin and s_end and o_begin and o_end):
+                if not (s_begin != None and s_end != None and o_begin != None and o_end != None):
                     count += 1
                     continue
 
-                p_idx = [self.pred2idx[p]] * len(tokens)
+                p_idx = [self.pred2idx[p]] * self.max_len
                 x = ['[CLS]'] + tokens
                 x = [self.tokenizer.convert_tokens_to_ids(t) for t in x]
+                if len(x) > self.max_len - 1:
+                    x = x[0: self.max_len - 1]
+                mask = [1 for i in range(len(x))]
 
                 # initialize y
                 y = ['O'] * len(x)
                 y[0] = '[CLS]'
                 y[s_begin] = 'B-SUB'
-                for i in range(s_begin+1, s_end+1):
-                    y[i] = 'I-SUB'
+                if s_end > s_begin:
+                    for i in range(s_begin + 1, s_end + 1):
+                        y[i] = 'I-SUB'
                 y[o_begin] = 'B-OBJ'
-                for i in range(o_begin+1, o_end+1):
-                    y[i] = 'I-OBJ'
+                if o_end > o_begin:
+                    for i in range(o_begin + 1, o_end + 1):
+                        y[i] = 'I-OBJ'
 
-                seg_id = [0] * (len(x) + 1) + [1] * len(p_idx)
-                x = x + [self.tokenizer.convert_tokens_to_ids('[SEP]')] + p_idx
-                y = y + ['[SEP]'] + ['CATEGORY'] * len(p_idx)
+                seg_id = [0] * (len(x) + 1)
+                x = x + [self.tokenizer.convert_tokens_to_ids('[SEP]')]
+                mask = mask + [1]
+                y = y + ['[SEP]']
                 if len(x) <= self.max_len:
                     x += [self.tokenizer.convert_tokens_to_ids('[PAD]')] * (self.max_len - len(x))
                     y += ['[PAD]'] * (self.max_len - len(y))
                     seg_id += [0] * (self.max_len - len(seg_id))
-                else:
-                    x = x[:self.max_len]
-                    y = y[:self.max_len]
-                    seg_id = seg_id[:self.max_len]
+                    mask += [0] * (self.max_len - len(mask))
 
                 # convert tokens to idx
                 y = [self.label2idx[t] for t in y]
 
+                assert len(x) == len(seg_id) == len(y) == len(p_idx) == len(mask)
                 X.append(x)
                 SEG_ID.append(seg_id)
                 Y.append(y)
+                P.append(p_idx)
+                MASK.append(mask)
 
                 pbar.set_description('Not Parse: %.4d' % count)
             pbar.update(1)
 
-        X, SEG_ID, Y = torch.LongTensor(X), torch.LongTensor(SEG_ID), torch.LongTensor(Y)
-        return X, SEG_ID, Y
+        X, SEG_ID, Y, P, MASK = torch.LongTensor(X), torch.LongTensor(SEG_ID), torch.LongTensor(Y), \
+                                torch.LongTensor(P), torch.LongTensor(MASK)
+        return X, SEG_ID, Y, P, MASK
 
 
 def get_predicate2idx(filename: str):
@@ -186,7 +199,7 @@ def get_predicate2idx(filename: str):
     with jsonlines.open(filename) as reader:
         for line in reader:
             predicates.append(line['predicate'])
-    
+
     predicates = set(predicates)
 
     # predicate2idx
@@ -196,17 +209,19 @@ def get_predicate2idx(filename: str):
 
     return predicate2idx, idx2predicate
 
+
 def get_char2idx(filename: str):
     chars = []
 
     with open(filename, 'r') as f:
         for char in f:
             chars.append(char[:-1])
-    
+
     char2idx = {char: idx for idx, char in enumerate(chars)}
     idx2char = {idx: char for char, idx in char2idx.items()}
 
     return char2idx, idx2char
+
 
 def find_sublist(x, subx):
     x_len = len(x)
