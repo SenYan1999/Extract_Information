@@ -35,7 +35,7 @@ class Trainer:
         F1 = 0 if p == r == 0 else 2 * r * p / (r + p)
         acc = (TP + TN) / (TP + TN + FP + FN)
 
-        return (p.item(), r.item(), F1.item(), acc.item())
+        return (p, r, F1, acc)
 
     def calculate_ner_result(self, pred, truth):
         pred = torch.argmax(pred, dim=-1)
