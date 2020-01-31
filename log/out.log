@@ -1,0 +1,3 @@
+2020-01-28 18:51:29,110 - test_log.py[line:3] - INFO: hello, world.
+2020-01-28 18:51:29,111 - test_log.py[line:4] - INFO: hello, world.
+2020-01-28 18:51:29,111 - test_log.py[line:5] - INFO: hello, world.
