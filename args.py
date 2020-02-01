@@ -33,9 +33,13 @@ parser.add_argument('--batch_size', type=int, default=2)
 parser.add_argument('--p_lr', type=float, default=0.0001)
 parser.add_argument('--ner_lr', type=float, default=0.0001)
 
+# about predict
+parser.add_argument('--state_dict', type=str, default='save/state_ 0_epoch.pt')
+
 # about log and saving models
 parser.add_argument('--log_file', type=str, default='./log/out.log')
 parser.add_argument('--save_path', type=str, default='./save')
+parser.add_argument('--state_dict', type=str, default='save/state_ 0_epoch.pt')
 
 
 class Hyperparams:
