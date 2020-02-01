@@ -26,7 +26,7 @@ class PredictPDataset(Dataset):
     def preprocess_text(self):
         X, SEG_ID = [], []
         for text in self.texts:
-            tokens = '[CLS]' + self.tokenizer.tokenize(text) + '[SEP]'
+            tokens = ['[CLS]'] + self.tokenizer.tokenize(text) + ['[SEP]']
             x = [self.tokenizer.convert_tokens_to_ids(t) for t in tokens]
 
             if len(x) <= self.max_len:
@@ -68,7 +68,9 @@ class PredictNERDataset(Dataset):
                 P.append(p)
                 SEG_ID.append(seg_id)
 
-        X, P, SEG_ID = torch.LongTensor(X), torch.LongTensor(P), torch.LongTensor(SEG_ID)
+        X = torch.cat(X, dim=-1)
+        P = torch.cat(P, dim=-1)
+        SEG_ID = torch.cat(SEG_ID, dim=-1)
 
         return X, P, SEG_ID
 
@@ -134,7 +136,9 @@ class Predictor:
                 P.append(p[:, 0])
                 NER.append(ner)
 
-        X, P, NER = map(lambda x: torch.cat(x, dim=-1), (X, P, NER))
+        X = torch.cat(X, dim=-1)
+        P = torch.cat(P, dim=-1)
+        NER = torch.cat(NER, dim=-1)
         assert X.shape[0] == P.shape[0] ==NER.shape[0]
 
         logger.info('Finish predicting NER.')
