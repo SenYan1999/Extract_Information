@@ -68,9 +68,9 @@ class PredictNERDataset(Dataset):
                 P.append(p)
                 SEG_ID.append(seg_id)
 
-        X = torch.cat(X, dim=-1)
-        P = torch.cat(P, dim=-1)
-        SEG_ID = torch.cat(SEG_ID, dim=-1)
+        X = torch.cat(X, dim=0)
+        P = torch.LongTensor(P)
+        SEG_ID = torch.LongTensor(SEG_ID)
 
         return X, P, SEG_ID
 
@@ -110,7 +110,7 @@ class Predictor:
                 X.append(x)
                 Logits.append(logits)
 
-        X, Logits = torch.cat(X, dim=-1), torch.cat(Logits, dim=-1)
+        X, Logits = torch.cat(X, dim=0), torch.cat(Logits, dim=0)
 
         logger.info('Finish predicting predicate.')
 
@@ -136,9 +136,9 @@ class Predictor:
                 P.append(p[:, 0])
                 NER.append(ner)
 
-        X = torch.cat(X, dim=-1)
-        P = torch.cat(P, dim=-1)
-        NER = torch.cat(NER, dim=-1)
+        X = torch.cat(X, dim=0)
+        P = torch.cat(P, dim=0)
+        NER = torch.cat(NER, dim=0)
         assert X.shape[0] == P.shape[0] ==NER.shape[0]
 
         logger.info('Finish predicting NER.')
