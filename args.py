@@ -39,7 +39,6 @@ parser.add_argument('--state_dict', type=str, default='save/state_ 0_epoch.pt')
 # about log and saving models
 parser.add_argument('--log_file', type=str, default='./log/out.log')
 parser.add_argument('--save_path', type=str, default='./save')
-parser.add_argument('--state_dict', type=str, default='save/state_ 0_epoch.pt')
 
 
 class Hyperparams:
