@@ -29,7 +29,7 @@ class P_Model(nn.Module):
         return out
 
 class NER_Model(nn.Module):
-    def __init__(self, bert_path, bert_dim, n_class, drop_p,num_pre, max_len):
+    def __init__(self, bert_path, bert_dim, n_class, drop_p, num_pre):
         super(NER_Model, self).__init__()
 
         self.bert_model = BertModel.from_pretrained(bert_path)
