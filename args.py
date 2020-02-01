@@ -16,7 +16,7 @@ parser.add_argument('--predicate2idx', type=str, default='data/predicate2idx.pt'
 parser.add_argument('--idx2predicate', type=str, default='data/idx2predicate.pt')
 parser.add_argument('--idx2label', type=str, default='data/idx2label.pt')
 parser.add_argument('--do_preprocess', action='store_true', help='whether to do preprocess', default=False)
-parser.add_argument('--do_train', action='store_true', help='whether to do train', default=True)
+parser.add_argument('--do_train', action='store_true', help='whether to do train', default=False)
 parser.add_argument('--do_predict', action='store_true', help='whether to do predict', default=False)
 parser.add_argument('--bert_path', type=str, default='./pretrained_bert_model/')
 

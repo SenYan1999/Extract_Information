@@ -109,7 +109,7 @@ class Trainer:
         for batch in self.dev_p_dataloader:
             x, seg_id, y = map(lambda i: i.to(self.device), batch)
 
-            with torch.no_grad:
+            with torch.no_grad():
                 out = self.p_model(x, seg_id)
             p_loss = F.binary_cross_entropy(out, y.float())
 
@@ -129,14 +129,14 @@ class Trainer:
 
         ner_losses, ner_acc = [], []
         for batch in self.dev_ner_dataloader:
-            x, seg_id, y = map(lambda i: i.to(self.device), batch)
+            x, seg_id, y, p, mask = map(lambda i: i.to(self.device), batch)
 
-            with torch.no_grad:
-                out = self.ner_model(x, seg_id)
-            ner_loss = F.nll_loss(out.reshape(-1, out.shape[2]), y.reshape(-1))
+            with torch.no_grad():
+                out = self.ner_model(x, seg_id, p, mask, self.device)
+                ner_loss = self.ner_model.loss_fn(transformer_encode=out, tags=y, output_mask=mask)
 
             ner_losses.append(ner_loss.item())
-            acc = self.calculate_ner_result(out, y)
+            acc = self.calculate_ner_result(out, y) ########################NOTE: ERROR!!!!!!!!!!!!!!
             ner_acc.append(acc)
 
         logger.info('Epoch: %2d | LOSS: %2.3f | ACC: %1.3f' % (epoch, np.mean(ner_losses), np.mean(ner_acc)))
