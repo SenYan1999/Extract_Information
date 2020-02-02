@@ -38,7 +38,7 @@ class Trainer:
         return (p, r, F1, acc)
 
     def calculate_ner_result(self, pred, truth):
-        acc = ((pred == truth).sum() - (pred == truth == 0).sum()) / (truth != 0).sum()
+        acc = ((pred == truth).sum() - ((pred == truth) == 0).sum()) / (truth != 0).sum()
         return acc.item()
 
     def train_epoch(self, epoch):
