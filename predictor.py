@@ -178,9 +178,6 @@ class Predictor:
             result.writerow([text, s, p, o])
             pbar.update(1)
 
-        result.close()
-
-
     def predict(self):
         logger.info('Predict...')
 
