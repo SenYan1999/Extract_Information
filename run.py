@@ -6,7 +6,7 @@ from utils import *
 from args import parser
 from model import P_Model, NER_Model
 from trainer import Trainer
-from predicate import Predictor
+from predictor import Predictor
 
 args = parser.parse_args()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
