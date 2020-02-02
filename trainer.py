@@ -38,8 +38,7 @@ class Trainer:
         return (p, r, F1, acc)
 
     def calculate_ner_result(self, pred, truth):
-        # pred = torch.argmax(pred, dim=-1)
-        acc = (pred == truth.cpu()).sum().float() / truth.shape[0] / truth.shape[1]
+        acc = ((pred == truth).sum() - (pred == truth == 0).sum()) / (truth != 0).sum()
         return acc.item()
 
     def train_epoch(self, epoch):
@@ -149,7 +148,7 @@ class Trainer:
             self.evaluate_epoch(epoch)
 
             # save state dict
-            path = os.path.join(save_path, 'state_%2d_epoch.pt' % epoch)
+            path = os.path.join(save_path, 'state_%d_epoch.pt' % epoch)
             self.save_dict(path)
 
     def save_dict(self, save_path):

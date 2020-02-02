@@ -64,7 +64,7 @@ class PredictNERDataset(Dataset):
             for p in ps:
                 p = [p] * x.shape[0]
                 seg_id = [0] * x.shape[0]
-                X.append(x)
+                X.append(x.unsqueeze(dim=0))
                 P.append(p)
                 SEG_ID.append(seg_id)
 
@@ -129,7 +129,7 @@ class Predictor:
                 x, p, seg_id = map(lambda i: i.to(self.device), batch)
 
                 mask = (x != 0).int()
-                out = self.ner_model(x, seg_id, p, mask)
+                out = self.ner_model(x, seg_id, p, mask, self.device)
                 ner = self.ner_model.predict(out, mask)
 
                 X.append(x)
@@ -139,7 +139,7 @@ class Predictor:
         X = torch.cat(X, dim=0)
         P = torch.cat(P, dim=0)
         NER = torch.cat(NER, dim=0)
-        assert X.shape[0] == P.shape[0] ==NER.shape[0]
+        assert X.shape[0] == P.shape[0] == NER.shape[0]
 
         logger.info('Finish predicting NER.')
 
@@ -149,14 +149,16 @@ class Predictor:
         result = csv.writer(open(out_file, 'w'))
         result.writerow(['Text', 'Subject', 'Predicate', 'Object'])
 
+        pbar = tqdm(total=X.shape[0])
+
         for x, p, ner in zip(X, P, NER):
             text = self.tokenizer.convert_ids_to_tokens(x, skip_special_tokens=True)
             text = self.tokenizer.convert_tokens_to_string(text)
 
-            p = idx2pred(p)
+            p = idx2pred[p.item()]
 
             s_begin, s_end, o_begin, o_end = None, None, None, None
-            ner = [idx2ner[n] for n in ner]
+            ner = [idx2ner[n.item()] for n in ner if n >= 0]
             for i, label in enumerate(ner):
                 if label == 'B-SUB':
                     s_begin = i
@@ -174,6 +176,7 @@ class Predictor:
             o = self.tokenizer.convert_tokens_to_string(o) if o else ''
 
             result.writerow([text, s, p, o])
+            pbar.update(1)
 
         result.close()
 

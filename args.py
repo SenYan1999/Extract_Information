@@ -6,7 +6,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--train_file', type=str, default='data/train_data.json')
 parser.add_argument('--dev_file', type=str, default='data/dev_data.json')
 parser.add_argument('--test_file', type=str, default='data/test_data.json')
-parser.add_argument('--test_result_file', type=str, default='save/result.csv')
 parser.add_argument('--train_ner_data', type=str, default='data/train_ner.pt')
 parser.add_argument('--dev_ner_data', type=str, default='data/dev_ner.pt')
 parser.add_argument('--train_p_data', type=str, default='data/train_p.pt')
@@ -35,6 +34,7 @@ parser.add_argument('--ner_lr', type=float, default=0.0001)
 
 # about predict
 parser.add_argument('--state_dict', type=str, default='save/state_0_epoch.pt')
+parser.add_argument('--test_result_file', type=str, default='save/result.csv')
 
 # about log and saving models
 parser.add_argument('--log_file', type=str, default='./log/out.log')

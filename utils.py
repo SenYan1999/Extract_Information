@@ -13,7 +13,6 @@ from model import P_Model, NER_Model
 # define global logging
 args = parser.parse_args()
 
-
 def init_logger(filename, when='D', backCount=3,
                 fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
     logger = logging.getLogger(filename)
