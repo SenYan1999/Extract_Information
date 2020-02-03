@@ -140,6 +140,12 @@ class NERDataset(Dataset):
             assert len(line['Predicate']) == len(line['Subject']) == len(line['Object'])
 
             for p, s, o in zip(line['Predicate'], line['Subject'], line['Object']):
+                p_idx = [self.pred2idx[p]] * self.max_len
+                tokens = ['[CLS]'] + tokens
+                x = [self.tokenizer.convert_tokens_to_ids(t) for t in tokens]
+                if len(x) > self.max_len - 1:
+                    x = x[0: self.max_len - 1]
+                    tokens=tokens[0:self.max_len-1]
                 s_begin, s_end = find_sublist(tokens, self.tokenizer.tokenize(s))
                 o_begin, o_end = find_sublist(tokens, self.tokenizer.tokenize(o))
 
@@ -147,11 +153,7 @@ class NERDataset(Dataset):
                     count += 1
                     continue
 
-                p_idx = [self.pred2idx[p]] * self.max_len
-                x = ['[CLS]'] + tokens
-                x = [self.tokenizer.convert_tokens_to_ids(t) for t in x]
-                if len(x) > self.max_len - 1:
-                    x = x[0: self.max_len - 1]
+
                 mask = [1 for i in range(len(x))]
 
                 # initialize y

@@ -18,7 +18,7 @@ parser.add_argument('--do_predict', action='store_true', help='whether to do pre
 parser.add_argument('--bert_path', type=str, default='./pretrained_bert_model/')
 
 # about preprocess
-parser.add_argument('--max_len', type=int, default=200)
+parser.add_argument('--max_len', type=int, default=128)
 
 # about model
 parser.add_argument('--bert_dim', type=int, default=768)

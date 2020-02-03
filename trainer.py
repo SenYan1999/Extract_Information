@@ -43,7 +43,7 @@ class Trainer:
         return acc.item()
 
     def train_epoch(self, epoch):
-        '''
+
         # step1: train p model
         logger.info('Epoch: %2d: Training P Model...' % epoch)
         pbar = tqdm(total = len(self.train_p_dataloader))
@@ -71,7 +71,7 @@ class Trainer:
         pbar.close()
         logger.info('Epoch: %2d | LOSS: %2.3f | F1: %1.3f | ACC: %1.3f | PRECISION: %1.3f | RECALL: %1.3f' %
                     (epoch, np.mean(p_losses), np.mean(p_f1), np.mean(p_acc), np.mean(p_p), np.mean(p_r)))
-        '''
+
         # step2: train ner model
         logger.info('Epoch %2d: Training NER Model...' % epoch)
         pbar = tqdm(total = len(self.train_ner_dataloader))
