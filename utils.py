@@ -2,16 +2,16 @@ import jsonlines
 import torch
 import os
 import logging
+
 from logging import handlers
-import sys
 from torch.utils.data import Dataset
 from tqdm import tqdm
 from transformers import BertTokenizer
 from args import parser
+from model import P_Model, NER_Model
 
 # define global logging
 args = parser.parse_args()
-
 
 def init_logger(filename, when='D', backCount=3,
                 fmt='%(asctime)s - %(pathname)s[line:%(lineno)d] - %(levelname)s: %(message)s'):
@@ -123,9 +123,13 @@ class NERDataset(Dataset):
     def get_ner_label(self):
         label = ['O', 'B-SUB', 'I-SUB', 'B-OBJ', 'I-OBJ', '[PAD]', 'CATEGORY', '[CLS]', '[SEP]']
         label2idx, idx2label = {}, {}
+
         for i, l in enumerate(label):
             label2idx[l] = i
             idx2label[i] = l
+
+        torch.save(idx2label, args.idx2label)
+
         return label2idx, idx2label
 
     def process_raw_data(self):
@@ -188,7 +192,7 @@ class NERDataset(Dataset):
                 P.append(p_idx)
                 MASK.append(mask)
 
-                pbar.set_description('Not Parse: %.4d' % count)
+                pbar.set_description('Not Parse: %4d' % count)
             pbar.update(1)
 
         X, SEG_ID, Y, P, MASK = torch.LongTensor(X), torch.LongTensor(SEG_ID), torch.LongTensor(Y), \
@@ -234,3 +238,16 @@ def find_sublist(x, subx):
             return i, i + subx_len - 1
 
     return None, None
+
+def load_dict(path, len_idx2pred, len_idx2ner):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    state_dict = torch.load(path)
+
+    p_model = P_Model(args.bert_path, args.bert_dim, len_idx2pred, args.drop_p, args.max_len).to(device)
+    ner_model = NER_Model(args.bert_path, args.bert_dim, len_idx2ner, args.drop_p, len_idx2pred).to(device)
+
+    p_model.load_state_dict(state_dict['p_model'])
+    ner_model.load_state_dict(state_dict['ner_model'])
+
+    return p_model, ner_model
+

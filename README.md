@@ -18,7 +18,13 @@ python run.py --do_preprocess
 ```
 
 #### Step3:
-Begin training our model. Note: log file is in log/ and saved model is in save/
+Begin training our model. Note: log file is in log and saved model is in save.
 ```
 python run.py --do_train
+```
+
+#### Step4:
+Predict model and parse the output of model to csv file.
+```
+python run.py --do_predict
 ```
